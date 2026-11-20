@@ -1,4 +1,4 @@
--- NinjaHub V15 - Kill Aura so o nome
+-- NinjaHub V16 FINAL - TUDO CORRIGIDO
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RS = game:GetService("RunService")
@@ -11,6 +11,7 @@ Gui.Name = "NinjaHub"
 Gui.ResetOnSpawn = false
 Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- ICONE FLUTUANTE 50x50
 local NinjaBtn = Instance.new("TextButton")
 NinjaBtn.Size = UDim2.new(0, 50, 0, 50)
 NinjaBtn.Position = UDim2.new(0, 15, 0, 110)
@@ -25,6 +26,7 @@ Instance.new("UICorner", NinjaBtn).CornerRadius = UDim.new(1, 0)
 local SN = Instance.new("UIStroke", NinjaBtn)
 SN.Color = Color3.fromRGB(255, 30, 30) SN.Thickness = 2
 
+-- TAMANHO 580x420
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 580, 0, 420)
 Main.Position = UDim2.new(0.5, -290, 0.5, -210)
@@ -54,7 +56,7 @@ local function CreatePage(name)
     f.Position = UDim2.new(0, 15, 0, 95)
     f.BackgroundTransparency = 1
     f.ScrollBarThickness = 3
-    f.CanvasSize = UDim2.new(0,0,0,1000)
+    f.CanvasSize = UDim2.new(0,0,0,1300)
     f.Visible = false
     f.Parent = Main
     local layout = Instance.new("UIListLayout", f)
@@ -148,6 +150,10 @@ local AutoChest = false
 local AutoHaki = false
 local ArmaSelecionada = "Espada"
 local UltimoGiro = 0
+local FlySpeed = 50
+local IndoAteFruta = false
+local DestinoFruta = nil
+
 local function Notificar(m) game:GetService("StarterGui"):SetCore("SendNotification", {Title="NINJA HUB", Text=m, Duration=5}) end
 local function GetFruit()
     for _, v in pairs(workspace:GetDescendants()) do if v:IsA("Tool") and string.find(v.Name:lower(), "fruit") then return v end end
@@ -189,6 +195,8 @@ local function EquiparArma()
         end
     end)
 end
+
+-- BATER CORRIGIDO: Activate + Clique do mouse + Remote
 local function Bater()
     pcall(function()
         local char = LocalPlayer.Character
@@ -201,6 +209,18 @@ local function Bater()
         pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("Attack") end)
     end)
 end
+
+-- FLY COM SPEED QUE VOCE ESCOLHE - 1 A 200
+local function VoarPara(hrp, destinoPos)
+    local dist = (destinoPos - hrp.Position).Magnitude
+    if dist < 3 then return true end
+    local passo = FlySpeed / 60
+    local dir = (destinoPos - hrp.Position).Unit
+    hrp.CFrame = hrp.CFrame + dir * passo
+    hrp.Velocity = Vector3.new(0,0,0)
+    return false
+end
+
 local function FormatarTempo(segundos)
     local h = math.floor(segundos / 3600)
     local m = math.floor((segundos % 3600) / 60)
@@ -229,11 +249,11 @@ local function GirarFruta()
             local cousinPos = nil
             for _, npc in pairs(workspace:GetDescendants()) do if npc:IsA("Model") and npc.Name == "Cousin" then cousinPos = npc:GetPivot().Position break end end
             if not cousinPos then cousinPos = Vector3.new(-379.8, 73.9, -245.9) end
-            for i = 1, 60 do
+            for i = 1, 300 do
                 if not char:FindFirstChild("HumanoidRootPart") then break end
-                hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(cousinPos + Vector3.new(0, 3, 3)), 0.15)
-                task.wait(0.05)
-                if (hrp.Position - cousinPos).Magnitude < 8 then break end
+                local chegou = VoarPara(hrp, cousinPos + Vector3.new(0, 3, 3))
+                task.wait(0.02)
+                if chegou then break end
             end
             task.wait(0.8)
             pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("Cousin", "Buy") end)
@@ -245,7 +265,7 @@ local function GirarFruta()
     end)
 end
 
--- KILL AURA - O NOME E SO "Kill Aura", SEM ESTRELA, SEM ON/OFF
+-- KILL AURA SO O NOME, SEM ESTRELA, SEM ON/OFF
 local KillAuraBtn = Instance.new("TextButton")
 KillAuraBtn.Size = UDim2.new(1, -10, 0, 38)
 KillAuraBtn.BackgroundColor3 = Color3.fromRGB(25, 20, 25)
@@ -262,9 +282,40 @@ KillAuraBtn.MouseButton1Click:Connect(function()
     Notificar(KillAura and "Kill Aura LIGADO" or "Kill Aura DESLIGADO")
     if KillAura then EquiparArma() end
 end)
-
 Toggle(P_Main, "Auto Farm", function(v) AutoFarm = v end)
 Toggle(P_Main, "Anti-AFK", function(v) if v then LocalPlayer.Idled:Connect(function() VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new(0,0)) end) end end)
+
+-- FLY SPEED 1 A 200
+Label(P_Main, "--- FLY SPEED ---")
+local FlyLabel = Label(P_Main, "Fly Speed: 50 / 200")
+local FlyFrame = Instance.new("Frame")
+FlyFrame.Size = UDim2.new(1, -10, 0, 38)
+FlyFrame.BackgroundTransparency = 1
+FlyFrame.Parent = P_Main
+local function FlyBtn(txt, x, func)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 50, 0, 32)
+    b.Position = UDim2.new(0, x, 0, 3)
+    b.BackgroundColor3 = Color3.fromRGB(150,20,20)
+    b.Text = txt
+    b.TextColor3 = Color3.fromRGB(255,255,255)
+    b.TextSize = 16
+    b.Font = Enum.Font.GothamBold
+    b.Parent = FlyFrame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+local function AtualizarFly()
+    FlySpeed = math.clamp(FlySpeed, 1, 200)
+    FlyLabel.Text = "  Fly Speed: "..FlySpeed.." / 200"
+end
+FlyBtn("-", 10, function() FlySpeed = FlySpeed - 10 AtualizarFly() end)
+FlyBtn("+", 70, function() FlySpeed = FlySpeed + 10 AtualizarFly() end)
+FlyBtn("50", 130, function() FlySpeed = 50 AtualizarFly() end)
+FlyBtn("100", 190, function() FlySpeed = 100 AtualizarFly() end)
+FlyBtn("200", 250, function() FlySpeed = 200 AtualizarFly() end)
+Label(P_Main, "1 = Devagar | 200 = Muito Rapido")
 
 Label(P_Home, "--- FRUTA - GACHA ---")
 GiroLabel = Label(P_Home, "Voce ainda nao girou!")
@@ -284,10 +335,15 @@ Botao(P_Home, "🍎 Ver se tem Fruta no Servidor", function()
     local f = GetFruit()
     if f then FrutaServerLabel.Text = "  TEM FRUTA! "..f.Name Notificar("TEM FRUTA! "..f.Name) else FrutaServerLabel.Text = "  Nenhuma fruta..." Notificar("Nenhuma fruta...") end
 end)
-Botao(P_Home, "🍎 Ir ate a Fruta Spawnada", function()
+Botao(P_Home, "🍎 Ir ate a Fruta Spawnada (Fly)", function()
     local f = GetFruit()
-    if f and LocalPlayer.Character then local pos = f:FindFirstChild("Handle") and f.Handle.Position or f:GetPivot().Position LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos + Vector3.new(0,3,0)) end
+    if not f then Notificar("Nenhuma fruta no servidor!") return end
+    local pos = f:FindFirstChild("Handle") and f.Handle.Position or f:GetPivot().Position
+    DestinoFruta = pos + Vector3.new(0, 3, 0)
+    IndoAteFruta = true
+    Notificar("Voando ate a fruta com Fly Speed "..FlySpeed.."!")
 end)
+Botao(P_Home, "🛑 Parar Fly ate Fruta", function() IndoAteFruta = false DestinoFruta = nil Notificar("Parou o fly!") end)
 
 Label(P_Farm, "--- ESCOLHER ARMA DO FARM ---")
 local ArmaLabel = Label(P_Farm, "Arma atual: Espada ⚔️")
@@ -336,6 +392,11 @@ RS.Heartbeat:Connect(function()
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
+    if IndoAteFruta and DestinoFruta then
+        local chegou = VoarPara(hrp, DestinoFruta)
+        if chegou then IndoAteFruta = false Notificar("Chegou na fruta! Pega ela!") end
+        return
+    end
     if KillAura then
         pcall(function()
             if tick() > baterCooldown then
@@ -354,19 +415,19 @@ RS.Heartbeat:Connect(function()
             if tick() > equipCooldown then equipCooldown = tick() + 2 EquiparArma() end
             local closest, dist = nil, 9999
             for _, mob in pairs(workspace.Enemies:GetChildren()) do if mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then local d = (mob.HumanoidRootPart.Position - hrp.Position).Magnitude if d < dist then dist = d; closest = mob end end end
-            if closest then hrp.CFrame = hrp.CFrame:Lerp(closest.HumanoidRootPart.CFrame * CFrame.new(0, 5, 3), 0.2) hrp.Velocity = Vector3.new(0,0,0) if dist < 12 and tick() > baterCooldown then Bater() baterCooldown = tick() + 0.3 end end
+            if closest then VoarPara(hrp, closest.HumanoidRootPart.Position + Vector3.new(0, 5, 3)) if dist < 12 and tick() > baterCooldown then Bater() baterCooldown = tick() + 0.3 end end
         end)
     end
     if EliteHunt then
         pcall(function()
-            for _, mob in pairs(workspace.Enemies:GetChildren()) do if string.find(mob.Name, "Elite") or string.find(mob.Name, "Diablo") or string.find(mob.Name, "Deandre") or string.find(mob.Name, "Urban") then if mob:FindFirstChild("HumanoidRootPart") and mob.Humanoid.Health > 0 then hrp.CFrame = hrp.CFrame:Lerp(mob.HumanoidRootPart.CFrame * CFrame.new(0,5,3), 0.2) if tick() > baterCooldown then Bater() baterCooldown = tick() + 0.3 end break end end end
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do if string.find(mob.Name, "Elite") or string.find(mob.Name, "Diablo") or string.find(mob.Name, "Deandre") or string.find(mob.Name, "Urban") then if mob:FindFirstChild("HumanoidRootPart") and mob.Humanoid.Health > 0 then VoarPara(hrp, mob.HumanoidRootPart.Position + Vector3.new(0,5,3)) if tick() > baterCooldown then Bater() baterCooldown = tick() + 0.3 end break end end end
         end)
     end
     if AutoChest and tick() > chestCooldown then
         pcall(function()
             local closestChest, dist = nil, 9999
             for _, obj in pairs(workspace:GetDescendants()) do if obj.Name == "Chest1" or obj.Name == "Chest2" or obj.Name == "Chest3" then if obj:IsA("Part") or obj:IsA("MeshPart") then local d = (obj.Position - hrp.Position).Magnitude if d < dist then dist = d; closestChest = obj end end end end
-            if closestChest then hrp.CFrame = hrp.CFrame:Lerp(closestChest.CFrame * CFrame.new(0,3,0), 0.3) chestCooldown = tick() + 1.5 end
+            if closestChest then VoarPara(hrp, closestChest.Position + Vector3.new(0,3,0)) chestCooldown = tick() + 1.5 end
         end)
     end
     local fruta = GetFruit()
@@ -381,4 +442,4 @@ task.spawn(function()
         MeuStatusLabel.Text = "  Level: "..lvl.." | Bounty: "..bounty.." | Fruta: "..fruit
     end
 end)
-print("NinjaHub V15 carregado!")
+print("NinjaHub V16 FINAL carregado!")
